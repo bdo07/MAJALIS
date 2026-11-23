@@ -59,6 +59,11 @@ class User extends Authenticatable
         return $this->hasMany(Hidayah::class);
     }
 
+    public function bookmarks(): HasMany
+    {
+        return $this->hasMany(Bookmark::class);
+    }
+
     /**
      * Determine whether the user is an admin or moderator.
      */

@@ -5,6 +5,8 @@ namespace App\Livewire;
 use Livewire\Component;
 use App\Services\QuranService;
 use App\Models\Majlis;
+use App\Models\Bookmark;
+use Illuminate\Support\Facades\Auth;
 
 class QuranShow extends Component
 {
@@ -40,6 +42,88 @@ class QuranShow extends Component
     public function toggleTafsir()
     {
         $this->showTafsir = !$this->showTafsir;
+    }
+
+    public function toggleSurahBookmark()
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $existing = Bookmark::where('user_id', Auth::id())
+            ->where('type', 'surah')
+            ->where('surah_number', $this->surahNumber)
+            ->whereNull('ayah_number')
+            ->first();
+
+        if ($existing) {
+            $existing->delete();
+            session()->flash('bookmark_message', 'تمت إزالة السورة من محفوظاتك.');
+        } else {
+            $surahData = app(QuranService::class)->getSurah($this->surahNumber);
+            Bookmark::create([
+                'user_id' => Auth::id(),
+                'type' => 'surah',
+                'surah_number' => $this->surahNumber,
+                'title' => $surahData['name'] ?? ('سورة رقم ' . $this->surahNumber),
+                'subtitle' => ($surahData['numberOfAyahs'] ?? 0) . ' آية • ' . (($surahData['revelationType'] ?? '') === 'Meccan' ? 'مكية' : 'مدنية'),
+            ]);
+            session()->flash('bookmark_message', 'تم حفظ السورة في محفوظاتك المرجعية.');
+        }
+    }
+
+    public function toggleAyahBookmark(int $ayahNumber, string $verseText)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $existing = Bookmark::where('user_id', Auth::id())
+            ->where('type', 'ayah')
+            ->where('surah_number', $this->surahNumber)
+            ->where('ayah_number', $ayahNumber)
+            ->first();
+
+        if ($existing) {
+            $existing->delete();
+            session()->flash('bookmark_message', "تمت إزالة الآية ({$ayahNumber}) من محفوظاتك.");
+        } else {
+            $surahData = app(QuranService::class)->getSurah($this->surahNumber);
+            $cleanSurah = app(QuranService::class)->cleanSurahName($surahData['name'] ?? '');
+            Bookmark::create([
+                'user_id' => Auth::id(),
+                'type' => 'ayah',
+                'surah_number' => $this->surahNumber,
+                'ayah_number' => $ayahNumber,
+                'title' => "سورة {$cleanSurah} - آية {$ayahNumber}",
+                'subtitle' => \Illuminate\Support\Str::limit($verseText, 90),
+            ]);
+            session()->flash('bookmark_message', "تم حفظ الآية ({$ayahNumber}) في محفوظاتك المرجعية.");
+        }
+    }
+
+    public function getBookmarkedAyahsProperty(): array
+    {
+        if (!Auth::check()) {
+            return [];
+        }
+        return Bookmark::where('user_id', Auth::id())
+            ->where('type', 'ayah')
+            ->where('surah_number', $this->surahNumber)
+            ->pluck('ayah_number')
+            ->toArray();
+    }
+
+    public function getIsSurahBookmarkedProperty(): bool
+    {
+        if (!Auth::check()) {
+            return false;
+        }
+        return Bookmark::where('user_id', Auth::id())
+            ->where('type', 'surah')
+            ->where('surah_number', $this->surahNumber)
+            ->whereNull('ayah_number')
+            ->exists();
     }
 
     public function render(QuranService $quranService)

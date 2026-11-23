@@ -19,6 +19,13 @@
                 </div>
 
                 <div class="flex items-center gap-2">
+                    @auth
+                        <button wire:click="toggleBookmark" 
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition {{ $this->isBookmarked ? 'bg-amber-100 dark:bg-amber-950/60 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300' : 'border-stone-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-stone-700 dark:text-zinc-300 hover:border-amber-500' }}">
+                            <span>{{ $this->isBookmarked ? '★ محفوظ' : '☆ حفظ المجلس' }}</span>
+                        </button>
+                    @endauth
+
                     <button @click="navigator.clipboard.writeText(window.location.href); copied = true; setTimeout(() => copied = false, 2500)"
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-semibold text-stone-700 dark:text-zinc-300 hover:border-emerald-700 transition">
                         <span x-show="!copied">🔗 نسخ رابط المجلس</span>
@@ -69,6 +76,12 @@
             <div class="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/40 text-emerald-800 dark:text-emerald-200 rounded-2xl text-xs sm:text-sm flex items-center gap-2">
                 <span>🌿</span>
                 <span>{{ session('hidayat_message') }}</span>
+            </div>
+        @endif
+        @if (session()->has('bookmark_message'))
+            <div class="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-200 rounded-2xl text-xs sm:text-sm flex items-center gap-2">
+                <span>★</span>
+                <span>{{ session('bookmark_message') }}</span>
             </div>
         @endif
 

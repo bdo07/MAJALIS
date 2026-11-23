@@ -2,25 +2,22 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         
         <!-- Hero Section: المصحف الشريف -->
-        <div class="relative rounded-3xl overflow-hidden bg-gradient-to-br from-emerald-950 via-teal-900 to-emerald-900 text-white p-8 sm:p-12 shadow-xl shadow-emerald-950/20">
-            <div class="absolute -top-24 -left-24 w-80 h-80 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none"></div>
-            <div class="absolute -bottom-24 -right-24 w-80 h-80 bg-amber-400/10 rounded-full blur-3xl pointer-events-none"></div>
-
+        <div class="relative rounded-3xl overflow-hidden bg-[#13231c] text-white p-8 sm:p-12 border border-emerald-900/60 shadow-lg">
             <div class="relative z-10 max-w-3xl space-y-4">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-800/60 border border-emerald-500/40 text-emerald-200 text-xs font-semibold backdrop-blur-sm">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-900/70 border border-emerald-700/50 text-emerald-200 text-xs font-semibold">
                     <span>📖</span>
-                    <span>كتاب الله المبين • برواية حفص عن عاصم</span>
+                    <span>كتاب الله المبين • بنص عثماني موثق وتلاوة خاشعة</span>
                 </div>
 
                 <h1 class="text-3xl sm:text-5xl font-bold font-serif tracking-tight leading-tight">
                     المصحف الشريف
                 </h1>
 
-                <p class="text-emerald-100/90 text-sm sm:text-base leading-relaxed font-sans">
-                    تصفح سور القرآن الكريم كاملة (١١٤ سورة) بنص عثماني معتمد وتلاوة صوتية خاشعة، مع ربط السور بمجالس التدبر الإيمانية والتربوية.
+                <p class="text-emerald-100/85 text-sm sm:text-base leading-relaxed font-sans max-w-2xl">
+                    تصفح سور القرآن الكريم كاملة (١١٤ سورة) بنص عثماني معتمد وتلاوة صوتية خاشعة، مع ربط السور بمجالس التدبر الإيمانية والتربوية وفق منهج مدارسة القرآن.
                 </p>
 
-                <div class="pt-4 flex flex-wrap items-center gap-6 text-xs text-emerald-200/90 font-mono">
+                <div class="pt-2 flex flex-wrap items-center gap-6 text-xs text-emerald-200/90 font-mono">
                     <div class="flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-amber-400"></span>
                         <span>١١٤ سورة كاملة</span>
@@ -34,6 +31,53 @@
                         <span>٣٠ جزءاً مباركاً</span>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Resume Reading Card (Alpine / LocalStorage) -->
+        <div x-data="{ 
+            lastRead: null,
+            init() {
+                try {
+                    this.lastRead = JSON.parse(localStorage.getItem('majalis_last_read') || 'null');
+                } catch(e) {}
+            },
+            clearLastRead() {
+                localStorage.removeItem('majalis_last_read');
+                this.lastRead = null;
+            }
+        }" 
+        x-show="lastRead" 
+        x-cloak
+        class="bg-white dark:bg-[#18191d] rounded-2xl border border-emerald-600/30 dark:border-emerald-500/30 p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                </div>
+                <div>
+                    <div class="text-xs font-semibold text-emerald-700 dark:text-emerald-400">متابعة التلاوة من حيث توقفت</div>
+                    <div class="text-base font-bold font-serif text-stone-900 dark:text-stone-100 mt-0.5">
+                        <span x-text="lastRead ? lastRead.surahName : ''"></span>
+                        <template x-if="lastRead && lastRead.ayahNumber > 1">
+                            <span class="text-xs font-normal text-stone-500 dark:text-zinc-400" x-text="'(الآية ' + lastRead.ayahNumber + ')'"></span>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 self-end sm:self-center shrink-0">
+                <a :href="lastRead ? lastRead.url : '#'" 
+                   class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-xl shadow-sm transition flex items-center gap-1.5">
+                    <span>متابعة القراءة</span>
+                    <span>↗</span>
+                </a>
+                <button @click="clearLastRead()" 
+                        class="p-2 text-stone-400 hover:text-stone-600 dark:hover:text-zinc-200 text-xs" 
+                        title="إغلاق التنبيه">
+                    ✕
+                </button>
             </div>
         </div>
 

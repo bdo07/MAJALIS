@@ -31,6 +31,7 @@
     <body class="font-sans antialiased bg-[#fbfbfa] dark:bg-[#121316] text-[#24292e] dark:text-[#e4e5e7] min-h-screen flex flex-col justify-between selection:bg-emerald-700 selection:text-white">
         <div class="flex-grow">
             @include('layouts.navigation')
+            <livewire:global-search />
 
             @isset($header)
                 <header class="bg-white/90 dark:bg-[#18191d]/90 backdrop-blur-md border-b border-stone-200/70 dark:border-zinc-800">

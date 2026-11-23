@@ -7,6 +7,7 @@ use App\Models\Majlis;
 use App\Models\Tadabbur;
 use App\Models\Hidayah;
 use App\Models\TadabburLike;
+use App\Models\Bookmark;
 use Illuminate\Support\Facades\Auth;
 
 class MajlisShow extends Component
@@ -18,6 +19,43 @@ class MajlisShow extends Component
     public string $content = '';
     public string $newHidayatContent = '';
     public bool $showTafsir = false;
+
+    public function toggleBookmark()
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $existing = Bookmark::where('user_id', Auth::id())
+            ->where('type', 'majlis')
+            ->where('majlis_id', $this->majlis->id)
+            ->first();
+
+        if ($existing) {
+            $existing->delete();
+            session()->flash('bookmark_message', 'تمت إزالة المجلس من محفوظاتك.');
+        } else {
+            Bookmark::create([
+                'user_id' => Auth::id(),
+                'type' => 'majlis',
+                'majlis_id' => $this->majlis->id,
+                'title' => $this->majlis->title,
+                'subtitle' => 'مجلس مدارسة وتدبر قرآني',
+            ]);
+            session()->flash('bookmark_message', 'تم حفظ المجلس في محفوظاتك المرجعية.');
+        }
+    }
+
+    public function getIsBookmarkedProperty(): bool
+    {
+        if (!Auth::check()) {
+            return false;
+        }
+        return Bookmark::where('user_id', Auth::id())
+            ->where('type', 'majlis')
+            ->where('majlis_id', $this->majlis->id)
+            ->exists();
+    }
 
     public function toggleTafsir()
     {

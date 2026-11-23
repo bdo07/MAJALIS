@@ -45,10 +45,10 @@
                     <div class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">مساهمات معتمدة ومنشورة</div>
                 </div>
                 <div class="p-4 bg-slate-50 dark:bg-gray-800/60 rounded-2xl border border-slate-100 dark:border-gray-700/60">
-                    <div class="text-xl font-bold text-amber-500 font-mono">
-                        {{ auth()->user()->tadabburat()->where('status', 'pending')->count() + auth()->user()->hidayat()->where('status', 'pending')->count() }}
+                    <div class="text-xl font-bold text-amber-600 dark:text-amber-400 font-mono">
+                        {{ auth()->user()->bookmarks()->count() }}
                     </div>
-                    <div class="text-xs text-amber-700 dark:text-amber-300 mt-0.5">قيد مراجعة المشرف</div>
+                    <div class="text-xs text-amber-700 dark:text-amber-300 mt-0.5">محفوظاتي المرجعية</div>
                 </div>
             </div>
         </div>
@@ -62,7 +62,7 @@
         @endif
 
         <!-- Tab Controls -->
-        <div class="flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-3">
+        <div class="flex flex-wrap items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-3">
             <button wire:click="switchTab('tadabburat')" 
                     class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 {{ $tab === 'tadabburat' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
                 <span>💡 تدبراتي الإيمانية</span>
@@ -76,6 +76,14 @@
                 <span>🌱 هداياتي العملية</span>
                 <span class="px-2 py-0.5 rounded-full text-xs {{ $tab === 'hidayat' ? 'bg-teal-700 text-teal-100' : 'bg-gray-200 dark:bg-gray-700' }}">
                     {{ auth()->user()->hidayat()->count() }}
+                </span>
+            </button>
+
+            <button wire:click="switchTab('bookmarks')" 
+                    class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 {{ $tab === 'bookmarks' ? 'bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+                <span>📑 محفوظاتي المرجعية</span>
+                <span class="px-2 py-0.5 rounded-full text-xs {{ $tab === 'bookmarks' ? 'bg-stone-700 dark:bg-stone-300 text-stone-100 dark:text-stone-800' : 'bg-gray-200 dark:bg-gray-700' }}">
+                    {{ auth()->user()->bookmarks()->count() }}
                 </span>
             </button>
         </div>
@@ -203,6 +211,93 @@
                 </div>
             @endif
 
+            @if($tab === 'bookmarks')
+                <!-- Bookmark Sub-filter Chips -->
+                <div class="flex items-center gap-2 pb-2">
+                    <button wire:click="setBookmarkFilter('all')" 
+                            class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition {{ $bookmarkType === 'all' ? 'bg-emerald-600 text-white' : 'bg-stone-100 dark:bg-zinc-800 text-stone-600 dark:text-zinc-300 hover:bg-stone-200 dark:hover:bg-zinc-700' }}">
+                        الكل ({{ auth()->user()->bookmarks()->count() }})
+                    </button>
+                    <button wire:click="setBookmarkFilter('majlis')" 
+                            class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition {{ $bookmarkType === 'majlis' ? 'bg-emerald-600 text-white' : 'bg-stone-100 dark:bg-zinc-800 text-stone-600 dark:text-zinc-300 hover:bg-stone-200 dark:hover:bg-zinc-700' }}">
+                        المجالس ({{ auth()->user()->bookmarks()->where('type', 'majlis')->count() }})
+                    </button>
+                    <button wire:click="setBookmarkFilter('surah')" 
+                            class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition {{ $bookmarkType === 'surah' ? 'bg-emerald-600 text-white' : 'bg-stone-100 dark:bg-zinc-800 text-stone-600 dark:text-zinc-300 hover:bg-stone-200 dark:hover:bg-zinc-700' }}">
+                        السور ({{ auth()->user()->bookmarks()->where('type', 'surah')->count() }})
+                    </button>
+                    <button wire:click="setBookmarkFilter('ayah')" 
+                            class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition {{ $bookmarkType === 'ayah' ? 'bg-emerald-600 text-white' : 'bg-stone-100 dark:bg-zinc-800 text-stone-600 dark:text-zinc-300 hover:bg-stone-200 dark:hover:bg-zinc-700' }}">
+                        الآيات ({{ auth()->user()->bookmarks()->where('type', 'ayah')->count() }})
+                    </button>
+                </div>
+
+                @forelse($bookmarks as $bm)
+                    <div class="bg-white dark:bg-gray-900 rounded-2xl border border-stone-200/80 dark:border-zinc-800 p-5 shadow-sm hover:border-emerald-600/40 dark:hover:border-emerald-500/40 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="space-y-1.5">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold {{ $bm->type === 'majlis' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' }}">
+                                    {{ $bm->type_label }}
+                                </span>
+                                <span class="text-xs text-stone-400 font-mono">
+                                    {{ $bm->created_at->locale('ar')->diffForHumans() }}
+                                </span>
+                            </div>
+
+                            <h3 class="text-base font-bold font-serif text-stone-900 dark:text-stone-100">
+                                {{ $bm->title }}
+                            </h3>
+
+                            @if($bm->subtitle)
+                                <p class="text-xs text-stone-500 dark:text-zinc-400 font-sans line-clamp-1">
+                                    {{ $bm->subtitle }}
+                                </p>
+                            @endif
+
+                            @if($bm->note)
+                                <div class="mt-2 p-2.5 rounded-xl bg-stone-50 dark:bg-zinc-800/60 border border-stone-200/60 dark:border-zinc-700/60 text-xs text-stone-700 dark:text-zinc-300">
+                                    <span class="font-semibold text-emerald-700 dark:text-emerald-400">ملاحظتك:</span> {{ $bm->note }}
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="flex items-center gap-3 self-end sm:self-center shrink-0">
+                            <a href="{{ $bm->url }}" 
+                               class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center gap-1.5">
+                                <span>الانتقال</span>
+                                <span>↗</span>
+                            </a>
+
+                            <button @click="confirmDeleteOpen = true; deleteType = 'bookmark'; deleteId = {{ $bm->id }}"
+                                    class="p-2 text-stone-400 hover:text-red-600 rounded-lg transition"
+                                    title="إزالة من المحفوظات">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                @empty
+                    <div class="bg-white dark:bg-gray-900 rounded-3xl p-12 text-center border border-gray-100 dark:border-gray-800 space-y-3">
+                        <span class="text-3xl block">📑</span>
+                        <h4 class="font-bold text-gray-800 dark:text-gray-200">لا توجد عناصر محفوظة حتى الآن</h4>
+                        <p class="text-xs text-gray-400">يمكنك حفظ المجالس القرآنية، والسور، والآيات الكريمة للرجوع إليها لاحقاً بضغطة زر واحدة.</p>
+                        <div class="flex items-center justify-center gap-3 pt-2">
+                            <a href="{{ route('majalis.index') }}" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition">
+                                تصفح المجالس
+                            </a>
+                            <a href="{{ route('quran.index') }}" class="px-4 py-2 border border-stone-200 dark:border-zinc-700 hover:bg-stone-50 dark:hover:bg-zinc-800 rounded-xl text-xs font-semibold transition">
+                                المصحف الشريف
+                            </a>
+                        </div>
+                    </div>
+                @endforelse
+
+                <div class="pt-4">
+                    {{ $bookmarks->links() }}
+                </div>
+            @endif
+
         </div>
 
         <!-- Delete Confirmation Modal (Alpine) -->
@@ -211,15 +306,15 @@
                 <div class="w-12 h-12 mx-auto rounded-full bg-red-100 dark:bg-red-950 text-red-600 flex items-center justify-center text-xl">
                     ⚠️
                 </div>
-                <h4 class="font-bold text-gray-900 dark:text-white text-base">هل أنت متأكد من حذف هذه المساهمة؟</h4>
+                <h4 class="font-bold text-gray-900 dark:text-white text-base">هل أنت متأكد من الحذف؟</h4>
                 <p class="text-xs text-gray-500 dark:text-gray-400">
-                    سيتم حذفها نهائياً من صحيفتك ومن المجلس.
+                    سيتم إزالة هذا العنصر من قائمتك.
                 </p>
                 <div class="flex items-center justify-center gap-3 pt-2">
                     <button @click="confirmDeleteOpen = false" class="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-300">
                         إلغاء
                     </button>
-                    <button @click="if (deleteType === 'tadabbur') { $wire.deleteTadabbur(deleteId); } else { $wire.deleteHidayah(deleteId); } confirmDeleteOpen = false" 
+                    <button @click="if (deleteType === 'tadabbur') { $wire.deleteTadabbur(deleteId); } else if (deleteType === 'hidayah') { $wire.deleteHidayah(deleteId); } else if (deleteType === 'bookmark') { $wire.deleteBookmark(deleteId); } confirmDeleteOpen = false" 
                             class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold">
                         نعم، احذف
                     </button>

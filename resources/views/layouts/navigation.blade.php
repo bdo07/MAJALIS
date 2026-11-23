@@ -84,7 +84,27 @@
             </div>
 
             <!-- Right Side: Dark Mode Toggle & Auth Controls -->
-            <div class="hidden sm:flex items-center gap-3">
+            <div class="hidden sm:flex items-center gap-2.5">
+                <!-- Quick Search Palette Trigger (⌘K) -->
+                <button @click="$dispatch('open-search')" 
+                        type="button"
+                        class="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-stone-200 dark:border-zinc-700 bg-stone-50 dark:bg-zinc-800/80 text-stone-500 dark:text-zinc-400 hover:text-stone-800 dark:hover:text-stone-200 hover:border-emerald-600/40 transition text-xs font-medium">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <span>بحث في السور والمجالس...</span>
+                    <kbd class="px-1.5 py-0.5 rounded bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-700 text-[10px] font-mono">⌘K</kbd>
+                </button>
+
+                <button @click="$dispatch('open-search')" 
+                        type="button"
+                        class="flex lg:hidden p-2 text-stone-500 dark:text-zinc-400 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-zinc-800 rounded-xl transition"
+                        title="بحث سريع">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </button>
+
                 <!-- Theme Switcher Button -->
                 <button @click="theme = theme === 'dark' ? 'light' : 'dark'" 
                         class="p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition duration-150 ease-in-out focus:outline-none"
@@ -191,6 +211,19 @@
     <!-- Responsive Navigation Menu (Mobile) -->
     <div x-show="open" x-cloak class="sm:hidden border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
         <div class="px-4 pt-3 pb-3 space-y-1">
+            <!-- Mobile Search Trigger -->
+            <button @click="open = false; $dispatch('open-search')" 
+                    type="button"
+                    class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-stone-100 dark:bg-zinc-800 text-stone-600 dark:text-zinc-300 text-sm font-semibold mb-2">
+                <span class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <span>بحث سريع في السور والمجالس</span>
+                </span>
+                <span class="text-xs text-stone-400">⌘K</span>
+            </button>
+
             <a href="{{ route('majalis.index') }}" 
                class="block px-3 py-2 rounded-lg text-base font-semibold {{ request()->routeIs('majalis.*') && !request()->routeIs('admin.*') ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40' : 'text-gray-700 dark:text-gray-300' }}">
                 📖 المجالس القرآنية

@@ -2,12 +2,33 @@
     isPlaying: false, 
     audio: null, 
     copiedAyah: null,
+    lastReadAyah: 1,
     progress: 0,
     currentTimeFormatted: '00:00',
     durationFormatted: '00:00',
 
     init() {
         this.audio = this.$refs.audioElement;
+        const hash = window.location.hash;
+        let initialAyah = 1;
+        if (hash && hash.startsWith('#ayah-')) {
+            const parsed = parseInt(hash.replace('#ayah-', ''));
+            if (!isNaN(parsed)) initialAyah = parsed;
+        }
+        this.savePosition(initialAyah);
+    },
+    savePosition(ayahNum) {
+        this.lastReadAyah = ayahNum;
+        try {
+            const item = {
+                surahNumber: {{ $surah['number'] }},
+                surahName: '{{ addslashes($surah['name']) }}',
+                ayahNumber: ayahNum,
+                timestamp: Date.now(),
+                url: window.location.href.split('#')[0] + (ayahNum > 1 ? '#ayah-' + ayahNum : '')
+            };
+            localStorage.setItem('majalis_last_read', JSON.stringify(item));
+        } catch(e) {}
     },
     togglePlay() {
         if (!this.audio) return;
@@ -90,6 +111,22 @@
             <p class="text-xs sm:text-sm text-stone-500 dark:text-zinc-400 font-sans">
                 {{ $surah['englishName'] }} • {{ $surah['englishNameTranslation'] }}
             </p>
+
+            <!-- Surah Bookmark & Action Button -->
+            <div class="pt-2 flex items-center justify-center gap-3">
+                @auth
+                    <button wire:click="toggleSurahBookmark" 
+                            class="px-4 py-2 rounded-xl border text-xs font-semibold transition flex items-center gap-1.5 {{ $this->isSurahBookmarked ? 'bg-amber-100 dark:bg-amber-950/60 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300' : 'bg-stone-50 dark:bg-zinc-800 border-stone-200 dark:border-zinc-700 text-stone-700 dark:text-zinc-300 hover:border-amber-500' }}">
+                        <span>{{ $this->isSurahBookmarked ? '★ سورة محفوظة' : '☆ حفظ السورة في المحفوظات' }}</span>
+                    </button>
+                @endauth
+            </div>
+
+            @if(session()->has('bookmark_message'))
+                <div class="p-3 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 rounded-xl text-xs font-medium">
+                    {{ session('bookmark_message') }}
+                </div>
+            @endif
         </header>
 
         <!-- Related Majlis Study Circle Banner (If Active) -->
@@ -197,14 +234,41 @@
                             $tafsirText = $tafsirMap[$ayah['numberInSurah']] ?? null;
                         @endphp
                         
-                        <div class="p-6 rounded-2xl bg-stone-50/50 dark:bg-zinc-800/30 border border-stone-200/60 dark:border-zinc-800 space-y-4 transition">
+                        <div id="ayah-{{ $ayah['numberInSurah'] }}" 
+                             class="p-6 rounded-2xl bg-stone-50/50 dark:bg-zinc-800/30 border border-stone-200/60 dark:border-zinc-800 space-y-4 transition"
+                             :class="lastReadAyah === {{ $ayah['numberInSurah'] }} ? 'ring-2 ring-emerald-600/30 dark:ring-emerald-500/30' : ''">
                             <!-- Ayah Header -->
                             <div class="flex items-center justify-between text-xs text-stone-400 dark:text-zinc-500 border-b border-stone-200/50 dark:border-zinc-800/60 pb-2.5">
-                                <span class="font-mono font-bold text-emerald-800 dark:text-emerald-400">
-                                    الآية {{ $ayah['numberInSurah'] }}
-                                </span>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-mono font-bold text-emerald-800 dark:text-emerald-400">
+                                        الآية {{ $ayah['numberInSurah'] }}
+                                    </span>
+                                    <template x-if="lastReadAyah === {{ $ayah['numberInSurah'] }}">
+                                        <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 text-[10px] font-semibold">
+                                            موضع قراءتك
+                                        </span>
+                                    </template>
+                                </div>
 
                                 <div class="flex items-center gap-3">
+                                    <!-- Mark as Last Read -->
+                                    <button @click="savePosition({{ $ayah['numberInSurah'] }})" 
+                                            class="hover:text-emerald-700 dark:hover:text-emerald-400 transition flex items-center gap-1 font-medium text-xs"
+                                            :class="lastReadAyah === {{ $ayah['numberInSurah'] }} ? 'text-emerald-700 dark:text-emerald-400 font-bold' : ''"
+                                            title="حفظ موضع التوقف">
+                                        <span x-show="lastReadAyah === {{ $ayah['numberInSurah'] }}">📍 توقفت هنا</span>
+                                        <span x-show="lastReadAyah !== {{ $ayah['numberInSurah'] }}">🔖 وضع علامة</span>
+                                    </button>
+
+                                    @auth
+                                        <!-- Bookmark Ayah Button -->
+                                        <button wire:click="toggleAyahBookmark({{ $ayah['numberInSurah'] }}, '{{ addslashes($text) }}')"
+                                                class="hover:text-amber-600 dark:hover:text-amber-400 transition flex items-center gap-1 font-medium text-xs {{ in_array($ayah['numberInSurah'], $this->bookmarkedAyahs) ? 'text-amber-600 dark:text-amber-400 font-bold' : '' }}"
+                                                title="حفظ الآية في المفضلة">
+                                            <span>{{ in_array($ayah['numberInSurah'], $this->bookmarkedAyahs) ? '★ محفوظة' : '☆ حفظ' }}</span>
+                                        </button>
+                                    @endauth
+
                                     <button @click="copyVerse('{{ addslashes($text) }}', '{{ $surah['name'] }}', {{ $ayah['numberInSurah'] }})" 
                                             class="hover:text-stone-700 dark:hover:text-zinc-200 transition flex items-center gap-1 font-medium">
                                         <span x-show="copiedAyah !== {{ $ayah['numberInSurah'] }}">📋 نسخ</span>
