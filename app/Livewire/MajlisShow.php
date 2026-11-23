@@ -5,36 +5,48 @@ namespace App\Livewire;
 use Livewire\Component;
 use App\Models\Majlis;
 use App\Models\Tadabbur;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Hidayah;
 use App\Models\TadabburLike;
+use Illuminate\Support\Facades\Auth;
 
 class MajlisShow extends Component
 {
     public Majlis $majlis;
-    public $content = '';
+    public string $activeTab = 'tadabburat'; // 'tadabburat', 'hidayat', 'contribute'
+    public string $contributionType = 'tadabbur'; // 'tadabbur' or 'hidayah'
 
+    public string $content = '';
     public string $newHidayatContent = '';
 
-    protected $rules = [
-        'content' => 'required|min:10|max:1000',
-    ];
+    protected function rules()
+    {
+        return [
+            'content' => 'required|min:10|max:1500',
+        ];
+    }
 
     public function mount(Majlis $majlis)
     {
-        // التحميل المسبق للعلاقات مع الإعجابات لحل مشكلة (N+1)
         $this->majlis = $majlis->load([
             'ayat',
-            'tadabburat' => fn($q) => $q->where('status', 'approved')->latest(),
-            'tadabburat.user',
-            'tadabburat.likes', // تمت إضافة تحميل الإعجابات هنا
-            'hidayat' => fn($q) => $q->where('status', 'approved')->latest(),
-            'hidayat.user',
+            'user',
+            'tadabburat' => fn($q) => $q->where('status', 'approved')->with(['user', 'likes'])->latest(),
+            'hidayat' => fn($q) => $q->where('status', 'approved')->with('user')->latest(),
         ]);
+    }
+
+    public function setTab(string $tab)
+    {
+        $this->activeTab = $tab;
+    }
+
+    public function setContributionType(string $type)
+    {
+        $this->contributionType = $type;
     }
 
     public function storeTadabbur()
     {
-        // حماية إضافية في الباك-إند لمنع غير المسجلين
         if (!Auth::check()) {
             return redirect()->route('login');
         }
@@ -46,24 +58,24 @@ class MajlisShow extends Component
             'majlis_id' => $this->majlis->id,
             'content' => $this->content,
             'status' => 'pending',
+            'likes_count' => 0,
         ]);
 
         $this->content = '';
 
-        session()->flash('message', 'جزاك الله خيراً! تم إرسال تدبرك بنجاح وسيظهر للعامة بعد مراجعته.');
+        session()->flash('message', 'جزاك الله خيراً! تم إرسال تدبرك الإيماني وسيظهر للجميع فور اعتماده من المشرف.');
 
-        // تحديث الكائن في الذاكرة وإعادة تحميل العلاقات
         $this->mount($this->majlis->refresh());
     }
 
-    public function toggleLike($tadabburId)
+    public function toggleLike(int $tadabburId)
     {
-        // حماية الإعجاب أيضاً لغير المسجلين
         if (!Auth::check()) {
             return redirect()->route('login');
         }
 
         $userId = Auth::id();
+        $tadabbur = Tadabbur::findOrFail($tadabburId);
 
         $existingLike = TadabburLike::where('user_id', $userId)
             ->where('tadabbur_id', $tadabburId)
@@ -71,38 +83,53 @@ class MajlisShow extends Component
 
         if ($existingLike) {
             $existingLike->delete();
+            $tadabbur->decrement('likes_count');
         } else {
             TadabburLike::create([
                 'user_id' => $userId,
                 'tadabbur_id' => $tadabburId,
             ]);
+            $tadabbur->increment('likes_count');
         }
 
-        // تحديث الكائن وإعادة تحميل العلاقات لكي يظهر القلب أحمر فوراً
         $this->mount($this->majlis->refresh());
     }
 
     public function storeHidayat()
     {
-        if (!auth()->check()) {
+        if (!Auth::check()) {
             return redirect()->route('login');
         }
 
         $this->validate([
-            'newHidayatContent' => 'required|min:10|max:1000',
+            'newHidayatContent' => 'required|min:10|max:1500',
         ]);
 
-        \App\Models\Hidayah::create([
-            'user_id' => auth()->id(),
+        Hidayah::create([
+            'user_id' => Auth::id(),
             'majlis_id' => $this->majlis->id,
             'content' => $this->newHidayatContent,
-            'status' => 'pending', // قيد المراجعة بانتظار موافقة المشرف
-            'votes_count' => 0,    // القيمة الافتراضية للتصويتات
+            'status' => 'pending',
+            'votes_count' => 0,
         ]);
 
         $this->newHidayatContent = '';
 
-        session()->flash('hidayat_message', 'جزاك الله خيراً! تم إرسال الهداية بنجاح وستظهر للعامة بعد مراجعتها.');
+        session()->flash('hidayat_message', 'بارك الله فيك! تم إرسال الهداية العملية وسيتم نشرها بعد مراجعة المشرف.');
+
+        $this->mount($this->majlis->refresh());
+    }
+
+    public function upvoteHidayah(int $hidayahId)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $hidayah = Hidayah::findOrFail($hidayahId);
+        $hidayah->increment('votes_count');
+
+        session()->flash('hidayat_vote_message_' . $hidayahId, 'شكر الله لك! تم تسجيل تأييدك للعمل بهذه الهداية.');
 
         $this->mount($this->majlis->refresh());
     }
