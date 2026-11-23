@@ -27,11 +27,18 @@ class AyahManager extends Component
     {
         return [
             'surah_name' => 'required|string|max:255',
-            'from_ayah' => 'required|integer',
-            'to_ayah' => 'required|integer',
+            'from_ayah' => 'required|integer|min:1',
+            'to_ayah' => 'required|integer|min:1',
             'quranic_text' => 'required|string',
             'bayan_text' => 'nullable|string',
         ];
+    }
+
+    public function boot()
+    {
+        if (auth()->check() && !auth()->user()->isAdmin()) {
+            abort(403, 'غير مصرح لك بالوصول إلى إدارة الآيات.');
+        }
     }
 
     public function mount(Majlis $majlis)
