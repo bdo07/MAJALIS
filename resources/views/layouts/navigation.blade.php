@@ -30,6 +30,12 @@
                         <span>المجالس القرآنية</span>
                     </a>
 
+                    <!-- المصحف الشريف (All Users) -->
+                    <a href="{{ route('quran.index') }}" 
+                       class="px-3.5 py-2 rounded-lg text-sm font-semibold transition-all duration-150 {{ request()->routeIs('quran.*') ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800/60' }}">
+                        <span>المصحف الشريف</span>
+                    </a>
+
                     @auth
                         <!-- مساهماتي (Authenticated User) -->
                         <a href="{{ route('my-contributions') }}" 
@@ -188,6 +194,11 @@
             <a href="{{ route('majalis.index') }}" 
                class="block px-3 py-2 rounded-lg text-base font-semibold {{ request()->routeIs('majalis.*') && !request()->routeIs('admin.*') ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40' : 'text-gray-700 dark:text-gray-300' }}">
                 📖 المجالس القرآنية
+            </a>
+
+            <a href="{{ route('quran.index') }}" 
+               class="block px-3 py-2 rounded-lg text-base font-semibold {{ request()->routeIs('quran.*') ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40' : 'text-gray-700 dark:text-gray-300' }}">
+                🕌 المصحف الشريف
             </a>
 
             @auth

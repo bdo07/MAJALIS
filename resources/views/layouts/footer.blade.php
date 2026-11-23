@@ -37,6 +37,12 @@
                             <span>تصفح المجالس</span>
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ route('quran.index') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400 transition flex items-center gap-1.5">
+                            <span>🕌</span>
+                            <span>المصحف الشريف (114 سورة)</span>
+                        </a>
+                    </li>
                     @auth
                         <li>
                             <a href="{{ route('my-contributions') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400 transition flex items-center gap-1.5">
