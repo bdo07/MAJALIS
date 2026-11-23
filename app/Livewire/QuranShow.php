@@ -9,8 +9,10 @@ use App\Models\Majlis;
 class QuranShow extends Component
 {
     public int $surahNumber;
-    public string $viewMode = 'mushaf'; // 'mushaf' or 'verse_by_verse'
+    public string $viewMode = 'verse_by_verse'; // 'verse_by_verse', 'mushaf'
     public string $fontSize = 'normal'; // 'small', 'normal', 'large', 'xl'
+    public string $reciter = 'ar.alafasy';
+    public bool $showTafsir = false;
 
     public function mount(int $surah)
     {
@@ -30,6 +32,16 @@ class QuranShow extends Component
         $this->fontSize = $size;
     }
 
+    public function setReciter(string $reciterKey)
+    {
+        $this->reciter = $reciterKey;
+    }
+
+    public function toggleTafsir()
+    {
+        $this->showTafsir = !$this->showTafsir;
+    }
+
     public function render(QuranService $quranService)
     {
         $surahData = $quranService->getSurah($this->surahNumber);
@@ -38,10 +50,12 @@ class QuranShow extends Component
             abort(500, 'تعذر تحميل بيانات السورة الكريمة.');
         }
 
+        $tafsirMap = $this->showTafsir ? $quranService->getSurahTafsir($this->surahNumber) : [];
         $neighbors = $quranService->getSurahNeighbors($this->surahNumber);
-        $audioUrl = $quranService->getSurahAudioUrl($this->surahNumber);
+        $audioUrl = $quranService->getSurahAudioUrl($this->surahNumber, $this->reciter);
+        $reciters = $quranService->getAvailableReciters();
 
-        // البحث عما إذا كان هناك مجالس تدبرية مرتبطة بهذه السورة
+        // ربط السورة بمجالس التدبر النشطة
         $cleanName = $quranService->cleanSurahName($surahData['name'] ?? '');
         $relatedMajalis = Majlis::where('is_published', true)
             ->where(function ($q) use ($cleanName) {
@@ -55,8 +69,10 @@ class QuranShow extends Component
 
         return view('livewire.quran-show', [
             'surah' => $surahData,
+            'tafsirMap' => $tafsirMap,
             'neighbors' => $neighbors,
             'audioUrl' => $audioUrl,
+            'reciters' => $reciters,
             'relatedMajalis' => $relatedMajalis,
         ])->layout('layouts.app');
     }

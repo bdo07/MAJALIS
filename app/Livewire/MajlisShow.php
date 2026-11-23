@@ -17,6 +17,12 @@ class MajlisShow extends Component
 
     public string $content = '';
     public string $newHidayatContent = '';
+    public bool $showTafsir = false;
+
+    public function toggleTafsir()
+    {
+        $this->showTafsir = !$this->showTafsir;
+    }
 
     protected function rules()
     {
@@ -134,8 +140,25 @@ class MajlisShow extends Component
         $this->mount($this->majlis->refresh());
     }
 
-    public function render()
+    public function render(\App\Services\QuranService $quranService)
     {
-        return view('livewire.majlis-show');
+        $tafsirMap = [];
+        if ($this->showTafsir) {
+            foreach ($this->majlis->ayat as $ayah) {
+                $surahNum = $quranService->getSurahNumberByName($ayah->surah_name);
+                if ($surahNum) {
+                    $tafsir = $quranService->getSurahTafsir($surahNum);
+                    for ($v = $ayah->from_ayah; $v <= $ayah->to_ayah; $v++) {
+                        if (isset($tafsir[$v])) {
+                            $tafsirMap[$ayah->id][$v] = $tafsir[$v];
+                        }
+                    }
+                }
+            }
+        }
+
+        return view('livewire.majlis-show', [
+            'tafsirMap' => $tafsirMap,
+        ]);
     }
 }
